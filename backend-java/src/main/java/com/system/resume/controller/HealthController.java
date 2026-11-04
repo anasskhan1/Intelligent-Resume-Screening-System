@@ -35,7 +35,7 @@ public class HealthController {
     ) {
         this.dataSource = dataSource;
         this.aiServiceClient = aiServiceClient;
-        String normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        String normalizedBaseUrl = AiServiceClient.normalizeBaseUrl(baseUrl);
         this.aiHealthUrl = normalizedBaseUrl + "/health";
     }
 

@@ -2,6 +2,7 @@ package com.system.resume.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
@@ -39,14 +40,33 @@ public class AiServiceClient {
         this(restTemplate, baseUrl, null);
     }
 
+    @Autowired
     public AiServiceClient(
             RestTemplate restTemplate,
             @Value("${ai.service.base-url:http://localhost:8000}") String baseUrl,
             @Value("${ai.service.api-key:${AI_SERVICE_API_KEY:}}") String apiKey
     ) {
         this.restTemplate = restTemplate;
-        this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        this.baseUrl = normalizeBaseUrl(baseUrl);
         this.apiKey = (apiKey != null && !apiKey.isBlank()) ? apiKey.trim() : null;
+    }
+
+    public static String normalizeBaseUrl(String rawUrl) {
+        if (rawUrl == null || rawUrl.isBlank()) {
+            return "http://localhost:8000";
+        }
+        String trimmed = rawUrl.trim();
+        while (trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+            trimmed = "http://" + trimmed;
+        }
+        return trimmed;
+    }
+
+    public String getBaseUrl() {
+        return this.baseUrl;
     }
 
     private void attachServiceAuthHeader(HttpHeaders headers) {

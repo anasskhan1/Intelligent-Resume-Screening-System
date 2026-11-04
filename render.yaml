@@ -56,7 +56,7 @@ services:
         fromService:
           type: web
           name: resume-screening-ai
-          property: url
+          property: hostport
       - key: AI_SERVICE_API_KEY
         fromService:
           type: web
