@@ -1,0 +1,154 @@
+# =============================================================================
+# Intelligent Resume Screening and Candidate Ranking System
+# Complete Multi-Container Docker Compose Architecture
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. Database Service: MySQL 8.0
+  # ---------------------------------------------------------------------------
+  db:
+    image: mysql:8.0
+    container_name: resume-screening-db
+    restart: unless-stopped
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-resume_screening_db}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password_change_me}
+      MYSQL_USER: ${DB_USERNAME:-resumes_app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-resumes_db_secret_change_me}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./backend-java/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    # Internal network isolation: internal port 3306 is not exposed to host in production
+    # Uncomment next 2 lines if local host database tool inspection is needed:
+    # ports:
+    #   - "127.0.0.1:3306:3306"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # 2. AI Microservice: Python FastAPI
+  # ---------------------------------------------------------------------------
+  ai-service:
+    build:
+      context: ./ai-service-python
+      dockerfile: Dockerfile
+    container_name: resume-screening-ai
+    restart: unless-stopped
+    environment:
+      AI_SERVICE_HOST: 0.0.0.0
+      AI_SERVICE_PORT: 8000
+      BACKEND_SERVICE_URL: http://backend:8080
+      ALLOWED_ORIGINS: http://backend:8080,http://frontend:80,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080
+      LOG_LEVEL: ${AI_LOG_LEVEL:-INFO}
+      MAX_UPLOAD_SIZE_BYTES: 10485760 # 10 MB per resume file
+    # Port 8000 is accessible within app-network; published locally for diagnostics if needed
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # 3. Backend REST Service: Java Spring Boot
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend-java
+      dockerfile: Dockerfile
+    container_name: resume-screening-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-resume_screening_db}
+      DB_USERNAME: ${DB_USERNAME:-resumes_app}
+      DB_PASSWORD: ${DB_PASSWORD:-resumes_db_secret_change_me}
+      DB_POOL_MAX_SIZE: ${DB_POOL_MAX_SIZE:-25}
+      DB_POOL_MIN_IDLE: ${DB_POOL_MIN_IDLE:-2}
+      AI_SERVICE_URL: http://ai-service:8000
+      UPLOAD_DIR: /app/uploads/resumes
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-10MB}
+      MAX_REQUEST_SIZE: ${MAX_REQUEST_SIZE:-500MB}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:5500,http://127.0.0.1:5500}
+      JWT_SECRET: ${JWT_SECRET:-your_default_jwt_secret_must_be_overridden_in_production_min_32_chars}
+      JWT_ISSUER: ${JWT_ISSUER:-intelligent-resume-screening-system}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-Lax}
+      INITIAL_ADMIN_EMAIL: ${INITIAL_ADMIN_EMAIL:-admin@resumescreening.local}
+      INITIAL_ADMIN_PASSWORD: ${INITIAL_ADMIN_PASSWORD:-}
+      INITIAL_ADMIN_FIRST_NAME: ${INITIAL_ADMIN_FIRST_NAME:-Admin}
+      INITIAL_ADMIN_LAST_NAME: ${INITIAL_ADMIN_LAST_NAME:-System}
+    volumes:
+      - resume_uploads:/app/uploads
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+  # ---------------------------------------------------------------------------
+  # 4. Frontend Web Client: Nginx Alpine
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: resume-screening-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# =============================================================================
+# Persistent Volumes & Private Network
+# =============================================================================
+volumes:
+  db_data:
+    name: resume_screening_db_data
+  resume_uploads:
+    name: resume_screening_uploads
+
+networks:
+  app-network:
+    name: resume_screening_network
+    driver: bridge
+

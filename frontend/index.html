@@ -1,0 +1,1040 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI-Powered Intelligent Resume Screening and Candidate Ranking Dashboard for recruiters.">
+  <title>Intelligent Resume Screening System | Recruiter Dashboard</title>
+
+  <!-- Google Fonts: Inter for clean enterprise typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Core Layout and Component CSS -->
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/components.css">
+
+  <!-- Deferred Application Scripts -->
+  <script src="js/api.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <!-- Session Restoration Splash Overlay (Task 4: Never exposes dashboard to unauthenticated users) -->
+  <div id="auth-loading-overlay" style="position: fixed; inset: 0; background-color: var(--color-bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-4);">
+    <div class="auth-brand-badge" aria-hidden="true" style="width: 52px; height: 52px; font-size: var(--text-xl);">RS</div>
+    <div id="auth-loading-status" style="display: flex; align-items: center; gap: var(--space-3); color: var(--color-text-main); font-weight: var(--font-semibold); font-size: var(--text-base);">
+      <span class="auth-spinner" style="border-color: rgba(30, 58, 138, 0.2); border-top-color: var(--color-primary); width: 20px; height: 20px;" aria-hidden="true"></span>
+      <span id="auth-loading-text">Verifying authentication session...</span>
+    </div>
+    <div id="auth-loading-error" style="display: none; flex-direction: column; align-items: center; gap: var(--space-3); max-width: 440px; text-align: center; padding: var(--space-4);">
+      <p id="auth-loading-error-msg" style="color: var(--color-rejected-dark); font-size: var(--text-sm); line-height: var(--leading-normal); margin: 0;"></p>
+      <button type="button" class="btn btn-primary btn-sm" id="auth-retry-btn">
+        <span>Retry Connection</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    
+    <!-- =======================================================================
+         1. Header Section
+         ======================================================================= -->
+    <header class="app-header" role="banner">
+      <div class="header-container">
+        <div class="brand-section">
+          <div class="brand-logo-badge" aria-hidden="true">RS</div>
+          <div class="brand-text-group">
+            <h1 class="brand-title">Intelligent Resume Screening System</h1>
+            <span class="brand-subtitle">AI-Powered Candidate Evaluation</span>
+          </div>
+        </div>
+
+        <!-- Top Workspace Navigation -->
+        <nav class="app-nav" role="tablist" aria-label="Recruiter Workspaces">
+          <button type="button" class="nav-tab is-active" id="nav-btn-upload" role="tab" aria-selected="true" aria-controls="workspace-batches">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>Bulk Upload &amp; Batches</span>
+          </button>
+          <button type="button" class="nav-tab" id="nav-btn-leaderboard" role="tab" aria-selected="false" aria-controls="workspace-leaderboard">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            <span>Screening Leaderboard</span>
+          </button>
+        </nav>
+
+        <div class="header-actions">
+          <button type="button" class="btn btn-primary btn-sm" id="open-job-modal-header-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Create Job Posting</span>
+          </button>
+          <div class="badge" id="backend-status-badge" role="status" aria-live="polite" style="background-color: var(--color-bg-alt); border: 1px solid var(--color-border); color: var(--color-text-body); font-weight: var(--font-medium); text-transform: none;">
+            <span id="backend-status-dot" style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-selected); display: inline-block;" aria-hidden="true"></span>
+            <span id="backend-status-text">Backend Connected</span>
+          </div>
+
+          <!-- Authenticated Recruiter Profile & Logout -->
+          <div class="user-auth-widget" id="user-auth-widget" style="display: flex; align-items: center; gap: var(--space-2); margin-left: var(--space-1);">
+            <div id="user-avatar-badge" style="width: 32px; height: 32px; border-radius: 50%; background: var(--color-primary-subtle); color: var(--color-primary); font-weight: var(--font-bold); font-size: var(--text-xs); display: flex; align-items: center; justify-content: center; border: 1px solid var(--color-primary-border);" title="Recruiter Profile">
+              <span id="user-avatar-initials">U</span>
+            </div>
+            <div class="user-meta" style="display: flex; flex-direction: column; line-height: 1.2;">
+              <span id="user-display-name" style="font-size: var(--text-xs); font-weight: var(--font-bold); color: var(--color-text-main);">Recruiter</span>
+              <span id="user-display-role" style="font-size: 11px; color: var(--color-text-muted);">ROLE_RECRUITER</span>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="auth-logout-btn" title="Sign out of recruiter portal" style="padding: 0.35rem 0.65rem; margin-left: var(--space-1);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- =======================================================================
+         Main Dashboard Content Container
+         ======================================================================= -->
+    <main class="dashboard-main" role="main">
+
+      <!-- =======================================================================
+           WORKSPACE 1: Bulk Upload & Batches
+           ======================================================================= -->
+      <div id="workspace-batches" class="workspace-pane" role="tabpanel" aria-labelledby="nav-btn-upload">
+
+        <!-- Hero Introduction for Bulk Upload -->
+        <section class="dashboard-hero" aria-labelledby="upload-hero-title">
+          <div class="hero-copy">
+            <h2 id="upload-hero-title" class="hero-title">Bulk Resume Ingestion &amp; Batch Processing</h2>
+            <p class="hero-description">
+              Upload candidate resumes in bulk (up to 100 files per batch in PDF, DOCX, or TXT), automatically detect
+              content duplicates with SHA-256 integrity, extract skills via the Python NLP microservice, and screen applicants against open positions.
+            </p>
+          </div>
+        </section>
+
+        <!-- Placeholder Section for Steps 4 & 5 -->
+        <div class="placeholder-section">
+        <!-- Step 4: Bulk Resume Upload Component -->
+        <section class="bulk-upload-card" id="bulk-upload-section" aria-labelledby="bulk-upload-card-title">
+          
+          <div class="bulk-upload-header">
+            <div>
+              <h3 id="bulk-upload-card-title" class="bulk-upload-title">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Bulk Resume Ingestion
+              </h3>
+              <p class="bulk-upload-subtitle">
+                Configure your batch, drag &amp; drop files, and submit for synchronous parsing, deduplication, and candidate screening.
+              </p>
+            </div>
+          </div>
+
+          <!-- Batch Configuration Fields -->
+          <div class="batch-config-grid">
+            <div class="form-group">
+              <label for="batch-name-input" class="form-label">
+                Batch Name
+                <span class="form-label-hint">Optional</span>
+              </label>
+              <input type="text" id="batch-name-input" class="form-control" placeholder="e.g. 2026 Q4 Senior Engineering Batch" maxlength="255">
+            </div>
+
+            <div class="form-group">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <label for="batch-job-select" class="form-label">
+                  Target Job Description
+                  <span class="form-label-hint">Optional</span>
+                </label>
+                <button type="button" class="btn btn-outline btn-xs" id="open-job-modal-batch-btn" style="padding: 2px 8px; font-size: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 4px;">
+                  + New Job
+                </button>
+              </div>
+              <select id="batch-job-select" class="form-select">
+                <option value="">-- No Target (Extract &amp; Store Only) --</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Drag and Drop Dropzone -->
+          <div class="dropzone" id="resume-dropzone" tabindex="0" role="region" aria-label="Resume File Dropzone">
+            <input type="file" id="resume-file-input" multiple accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" style="display: none;">
+            <div class="dropzone-icon-wrap" aria-hidden="true">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <div class="dropzone-text-group">
+              <p class="dropzone-prompt">
+                Drag and drop resume files here, or <button type="button" class="btn-link" id="browse-files-btn">browse files</button>
+              </p>
+              <p class="dropzone-hint">
+                Supported formats: <strong>PDF, DOCX, TXT</strong> &bull; Max <strong>10 MB</strong> per file &bull; Up to <strong>100 files (500 MB total)</strong> per batch
+              </p>
+            </div>
+          </div>
+
+          <!-- Selected Files Queue Section (hidden when queue is empty) -->
+          <div class="queue-section is-hidden" id="queue-section" aria-labelledby="queue-section-title">
+            <div class="queue-header">
+              <div class="queue-header-left">
+                <h4 id="queue-section-title" class="queue-title">Selected Resumes Queue</h4>
+                <span class="badge" id="queue-count-badge">0 / 100 Files</span>
+                <span class="badge" style="background-color: var(--color-bg-alt); border-color: var(--color-border); color: var(--color-text-muted);" id="queue-size-badge">0 KB</span>
+              </div>
+              <button type="button" class="btn btn-sm btn-secondary" id="clear-queue-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                Clear Queue
+              </button>
+            </div>
+
+            <!-- Scrollable Queue Container -->
+            <div class="queue-list" id="queue-list" role="list"></div>
+          </div>
+
+          <!-- Upload Action Bar -->
+          <div class="upload-action-bar">
+            <div class="upload-action-info" id="upload-action-info">
+              <span>Select files to begin. Up to 100 files allowed per batch.</span>
+            </div>
+            <button type="button" class="btn btn-primary btn-lg" id="upload-batch-btn" disabled>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" id="upload-btn-icon">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <span id="upload-btn-text">Upload &amp; Process Batch</span>
+            </button>
+          </div>
+
+          <!-- Active Processing Feedback Banner (shown while upload request is in-flight) -->
+          <div class="processing-banner is-hidden" id="upload-processing-banner" role="status" aria-live="polite">
+            <div class="processing-spinner-wrap">
+              <span class="spinner spinner-dark" style="width: 28px; height: 28px; border-width: 3px;" aria-hidden="true"></span>
+            </div>
+            <div class="processing-content">
+              <div class="processing-header-line">
+                <h4 class="processing-title" id="processing-banner-title">Uploading &amp; Processing Batch Resumes...</h4>
+                <span class="processing-timer" id="processing-elapsed-timer">Elapsed: 00:00</span>
+              </div>
+              <p class="processing-description" id="processing-banner-description">
+                Transmitting files to the Spring Boot backend, computing SHA-256 hashes, invoking the Python NLP microservice for resume text extraction, and running candidate screening.
+              </p>
+              <div class="processing-progress-track">
+                <div class="processing-progress-bar" id="processing-progress-bar" style="width: 0%; transition: width 0.3s ease;"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted);">
+                <span id="processing-progress-text">Preparing batch...</span>
+                <span id="processing-progress-status" class="badge badge-info">PROCESSING</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Batch Outcome Results Card (shown after upload completes) -->
+          <div class="outcome-card is-hidden" id="upload-outcome-card" role="region" aria-label="Batch Processing Outcome">
+            <div class="outcome-header">
+              <div>
+                <h4 class="outcome-title" id="outcome-batch-title">Batch Processing Complete</h4>
+                <p class="outcome-subtitle" id="outcome-batch-subtitle">Synchronous processing finished across all queued files.</p>
+              </div>
+              <div class="outcome-header-actions" id="outcome-header-actions">
+                <!-- Action buttons populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Outcome KPI mini-cards -->
+            <div class="outcome-metrics-grid">
+              <div class="outcome-metric-card">
+                <span class="outcome-metric-label">Total Files</span>
+                <span class="outcome-metric-value" id="outcome-total-count">0</span>
+              </div>
+              <div class="outcome-metric-card outcome-metric-parsed">
+                <span class="outcome-metric-label">Parsed &amp; Stored</span>
+                <span class="outcome-metric-value" id="outcome-parsed-count">0</span>
+              </div>
+              <div class="outcome-metric-card outcome-metric-duplicate">
+                <span class="outcome-metric-label">Duplicates</span>
+                <span class="outcome-metric-value" id="outcome-duplicate-count">0</span>
+              </div>
+              <div class="outcome-metric-card outcome-metric-failed">
+                <span class="outcome-metric-label">Failed</span>
+                <span class="outcome-metric-value" id="outcome-failed-count">0</span>
+              </div>
+            </div>
+
+            <!-- Detailed Files Table -->
+            <div class="outcome-table-wrap">
+              <table class="outcome-table" aria-label="Batch Files Outcome Details">
+                <thead>
+                  <tr>
+                    <th scope="col" style="width: 35%;">File Name</th>
+                    <th scope="col" style="width: 15%;">Outcome</th>
+                    <th scope="col" style="width: 25%;">Integrity (SHA-256)</th>
+                    <th scope="col" style="width: 25%;">Details / Error Note</th>
+                  </tr>
+                </thead>
+                <tbody id="outcome-files-tbody">
+                  <!-- Rows populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Dismiss / New Batch Button -->
+            <div class="outcome-footer">
+              <button type="button" class="btn btn-secondary" id="outcome-dismiss-btn">
+                Dismiss Summary &amp; New Upload
+              </button>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- Step 5: Batch Processing History & Outcomes View -->
+        <section class="batch-history-card" id="batch-history-section" aria-labelledby="batch-history-card-title">
+          
+          <!-- SUB-VIEW A: Batches List View -->
+          <div id="batch-history-list-view">
+            <div class="batch-history-header">
+              <div>
+                <h3 id="batch-history-card-title" class="batch-history-title">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                  </svg>
+                  Batch Ingestion History
+                </h3>
+                <p class="batch-history-subtitle">
+                  Review previously uploaded resume batches, processing metrics, and file outcomes.
+                </p>
+              </div>
+              <div class="batch-history-actions">
+                <button type="button" class="btn btn-secondary btn-sm" id="refresh-batches-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" id="refresh-batches-icon">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                  </svg>
+                  <span id="refresh-batches-text">Refresh History</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Loading State -->
+            <div class="loading-block is-hidden" id="batch-history-loading">
+              <span class="spinner spinner-dark" aria-hidden="true"></span>
+              <span>Loading batch processing history...</span>
+            </div>
+
+            <!-- Error State -->
+            <div class="error-banner is-hidden" id="batch-history-error" role="alert" style="margin-top: var(--space-4);">
+              <div class="error-content">
+                <h4 class="error-title" id="batch-history-error-title">Failed to Load Batches</h4>
+                <p class="error-description" id="batch-history-error-message">Could not retrieve resume batch records from backend.</p>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline" id="retry-batches-btn">Retry</button>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state is-hidden" id="batch-history-empty" style="margin-top: var(--space-4);">
+              <div class="empty-state-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+              </div>
+              <h4 class="empty-state-title">No Batch History Found</h4>
+              <p class="empty-state-text">
+                No resume batches have been uploaded yet. Use the upload area above to stage and process your first batch of resumes.
+              </p>
+            </div>
+
+            <!-- Batches Table Container -->
+            <div class="history-table-wrap" id="batch-history-table-container">
+              <table class="history-table" aria-label="Resume Batches Table">
+                <thead>
+                  <tr>
+                    <th scope="col" style="width: 10%;">Batch ID</th>
+                    <th scope="col" style="width: 24%;">Batch Name</th>
+                    <th scope="col" style="width: 20%;">Target Job</th>
+                    <th scope="col" style="width: 16%;">Submitted</th>
+                    <th scope="col" style="width: 12%;">Processed</th>
+                    <th scope="col" style="width: 10%;">Status</th>
+                    <th scope="col" style="width: 8%; text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="batch-history-tbody">
+                  <!-- Populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- SUB-VIEW B: Selected Batch Details View (Hidden by default) -->
+          <div id="batch-detail-view" class="is-hidden">
+            <div class="batch-detail-header">
+              <div class="batch-detail-nav">
+                <button type="button" class="btn btn-secondary btn-sm" id="batch-detail-back-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                  </svg>
+                  <span>Back to Batches History</span>
+                </button>
+                <div>
+                  <h3 class="outcome-title" id="batch-detail-title">Batch # Details</h3>
+                  <p class="outcome-subtitle" id="batch-detail-subtitle">Created: ... &bull; Status: ...</p>
+                </div>
+              </div>
+              <div class="outcome-header-actions" id="batch-detail-actions">
+                <button type="button" class="btn btn-secondary btn-sm" id="batch-detail-refresh-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" id="batch-detail-refresh-icon">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                  </svg>
+                  <span id="batch-detail-refresh-text">Refresh Batch Status</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Detail Loading State -->
+            <div class="loading-block is-hidden" id="batch-detail-loading">
+              <span class="spinner spinner-dark" aria-hidden="true"></span>
+              <span>Loading batch details and file outcomes...</span>
+            </div>
+
+            <!-- Detail Error State -->
+            <div class="error-banner is-hidden" id="batch-detail-error" role="alert" style="margin-top: var(--space-4);">
+              <div class="error-content">
+                <h4 class="error-title" id="batch-detail-error-title">Failed to Load Batch Details</h4>
+                <p class="error-description" id="batch-detail-error-message">Could not retrieve file records for this batch.</p>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline" id="retry-batch-detail-btn">Retry</button>
+            </div>
+
+            <!-- Detail Content Wrapper (KPIs and File Table) -->
+            <div id="batch-detail-content" style="display: flex; flex-direction: column; gap: var(--space-5); margin-top: var(--space-4);">
+              <!-- Outcome KPI mini-cards -->
+              <div class="outcome-metrics-grid">
+                <div class="outcome-metric-card">
+                  <span class="outcome-metric-label">Total Files</span>
+                  <span class="outcome-metric-value" id="detail-total-count">0</span>
+                </div>
+                <div class="outcome-metric-card outcome-metric-parsed">
+                  <span class="outcome-metric-label">Parsed &amp; Stored</span>
+                  <span class="outcome-metric-value" id="detail-parsed-count">0</span>
+                </div>
+                <div class="outcome-metric-card outcome-metric-duplicate">
+                  <span class="outcome-metric-label">Duplicates</span>
+                  <span class="outcome-metric-value" id="detail-duplicate-count">0</span>
+                </div>
+                <div class="outcome-metric-card outcome-metric-failed">
+                  <span class="outcome-metric-label">Failed</span>
+                  <span class="outcome-metric-value" id="detail-failed-count">0</span>
+                </div>
+              </div>
+
+              <!-- Detailed Files Table -->
+              <div class="outcome-table-wrap">
+                <table class="outcome-table" aria-label="Batch Individual File Outcomes">
+                  <thead>
+                    <tr>
+                      <th scope="col" style="width: 28%;">File Name</th>
+                      <th scope="col" style="width: 14%;">Status</th>
+                      <th scope="col" style="width: 24%;">Integrity (SHA-256)</th>
+                      <th scope="col" style="width: 20%;">Outcome Details / Error</th>
+                      <th scope="col" style="width: 14%;">Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody id="batch-detail-files-tbody">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+        </div>
+
+      </div>
+
+      <!-- =======================================================================
+           WORKSPACE 2: Candidate Ranking & Screening Leaderboard (Existing UI)
+           ======================================================================= -->
+      <div id="workspace-leaderboard" class="workspace-pane is-hidden" role="tabpanel" aria-labelledby="nav-btn-leaderboard">
+
+      <!-- Hero Introduction -->
+      <section class="dashboard-hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <h2 id="hero-title" class="hero-title">Candidate Ranking & Top-N Selection</h2>
+          <p class="hero-description">
+            Screen applicants deterministically against job criteria, automatically designate top-ranking candidates,
+            review explainable AI decision reasoning, and apply recruiter overrides.
+          </p>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           2. Recruiter Control Panel
+           ===================================================================== -->
+      <section class="dashboard-section" aria-labelledby="controls-heading">
+        <div class="control-card">
+          <div class="control-card-header">
+            <h3 id="controls-heading" class="control-card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+              Recruiter Screening Controls
+            </h3>
+            <span class="form-label-hint">Configure automated selection parameters</span>
+          </div>
+
+          <form id="ranking-form" class="control-grid">
+            
+            <!-- Job Selection Dropdown -->
+            <div class="form-group">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <label for="job-select" class="form-label">
+                  Target Job Description
+                  <span class="form-label-hint" id="job-count-hint">Loading positions...</span>
+                </label>
+                <button type="button" class="btn btn-outline btn-xs" id="open-job-modal-leaderboard-btn" style="padding: 2px 8px; font-size: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 4px;">
+                  + New Job
+                </button>
+              </div>
+              <select id="job-select" class="form-select" required aria-required="true">
+                <option value="" disabled selected>-- Select a Job Description --</option>
+              </select>
+            </div>
+
+            <!-- Candidate Selection Count Input (Top N) -->
+            <div class="form-group">
+              <label for="top-n" class="form-label">
+                Select Count (Top N)
+                <span class="form-label-hint">Quota</span>
+              </label>
+              <input type="number" id="top-n" class="form-control" value="10" min="1" step="1" required aria-required="true" placeholder="e.g. 10">
+            </div>
+
+            <!-- Minimum Match Score Range Slider -->
+            <div class="form-group slider-group">
+              <div class="slider-header-group">
+                <label for="min-score" class="form-label">Min Match Score</label>
+                <span class="slider-val-tag" id="min-score-value">20%</span>
+              </div>
+              <input type="range" id="min-score" class="range-slider" min="0" max="100" value="20" step="1" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20">
+              <div class="slider-bounds" aria-hidden="true">
+                <span>0%</span>
+                <span>Threshold</span>
+                <span>100%</span>
+              </div>
+            </div>
+
+            <!-- Generate Rankings Button -->
+            <div class="form-group">
+              <button type="button" id="generate-btn" class="btn btn-primary" aria-label="Generate candidate rankings and automated selection">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                <span id="generate-btn-text">Generate Rankings</span>
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           3. KPI Metrics Summary Row
+           ===================================================================== -->
+      <section class="dashboard-section" aria-labelledby="kpi-heading">
+        <h3 id="kpi-heading" class="sr-only" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">Screening Summary Metrics</h3>
+        <div class="kpi-row">
+          
+          <!-- Total Applicants -->
+          <div class="kpi-card kpi-total">
+            <div class="kpi-card-header">
+              <span class="kpi-label">Total Applicants</span>
+              <div class="kpi-icon-wrap" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="total-applicants">0</div>
+            <div class="kpi-meta">Screened candidate profiles</div>
+          </div>
+
+          <!-- Selected Candidates -->
+          <div class="kpi-card kpi-selected">
+            <div class="kpi-card-header">
+              <span class="kpi-label">Selected Candidates</span>
+              <div class="kpi-icon-wrap" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="selected-count">0</div>
+            <div class="kpi-meta">Met Top-N quota & threshold</div>
+          </div>
+
+          <!-- Rejected Candidates -->
+          <div class="kpi-card kpi-rejected">
+            <div class="kpi-card-header">
+              <span class="kpi-label">Rejected Candidates</span>
+              <div class="kpi-icon-wrap" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="rejected-count">0</div>
+            <div class="kpi-meta">Outside quota or score floor</div>
+          </div>
+
+          <!-- Manual Overrides -->
+          <div class="kpi-card kpi-override">
+            <div class="kpi-card-header">
+              <span class="kpi-label">Manual Overrides</span>
+              <div class="kpi-icon-wrap" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="override-count">0</div>
+            <div class="kpi-meta">Recruiter decisions preserved</div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           4. Filter Tabs & Leaderboard Section
+           ===================================================================== -->
+      <section class="dashboard-section" aria-labelledby="leaderboard-heading">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h3 id="leaderboard-heading" class="section-title">Candidate Evaluation Leaderboard</h3>
+            <span class="section-badge-count" id="leaderboard-total-badge">0 Candidates</span>
+          </div>
+
+          <!-- Filter Navigation Tabs -->
+          <div class="filter-tabs-row" role="tablist" aria-label="Candidate Filter Tabs">
+            <button type="button" class="tab-pill is-active" id="tab-all" role="tab" aria-selected="true" data-filter="all">
+              All Applicants
+              <span class="tab-badge-num" id="tab-badge-all">0</span>
+            </button>
+            <button type="button" class="tab-pill" id="tab-selected" role="tab" aria-selected="false" data-filter="selected">
+              Selected
+              <span class="tab-badge-num" id="tab-badge-selected">0</span>
+            </button>
+            <button type="button" class="tab-pill" id="tab-rejected" role="tab" aria-selected="false" data-filter="rejected">
+              Rejected
+              <span class="tab-badge-num" id="tab-badge-rejected">0</span>
+            </button>
+            <button type="button" class="tab-pill" id="tab-override" role="tab" aria-selected="false" data-filter="override">
+              Manually Overridden
+              <span class="tab-badge-num" id="tab-badge-override">0</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Candidate Search & Advanced Filtering Toolbar (Phase 4B - Step 5 & 6) -->
+        <div class="leaderboard-filter-toolbar" id="leaderboard-filter-toolbar" style="display: none;">
+          <div class="filter-toolbar-primary">
+            <div class="search-input-wrap">
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="candidate-search-input" class="form-input search-input" placeholder="Search by candidate name, email, or skill (e.g. Java, Python)..." autocomplete="off" aria-label="Search candidates">
+              <button type="button" id="search-clear-btn" class="search-clear-btn" style="display: none;" title="Clear search" aria-label="Clear search">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <button type="button" class="btn btn-secondary btn-sm" id="toggle-advanced-filters-btn" aria-expanded="false" aria-controls="advanced-filters-panel">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+              <span>Filters</span>
+              <span class="badge badge-primary filter-count-badge" id="active-filter-count-badge" style="display: none;">0</span>
+            </button>
+
+            <button type="button" class="btn btn-text btn-sm" id="clear-all-filters-btn" style="display: none; color: var(--color-danger);">
+              Clear All Filters
+            </button>
+
+            <!-- Export CSV Dropdown (Phase 4B - Step 6) -->
+            <div class="export-dropdown-wrap" style="position: relative; margin-left: auto;">
+              <button type="button" class="btn btn-secondary btn-sm" id="export-csv-btn" title="Export candidate evaluation data to CSV" aria-expanded="false" aria-haspopup="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Export CSV</span>
+                <span class="badge badge-light" id="export-count-badge" style="font-size: 11px; padding: 1px 6px;">0</span>
+              </button>
+              <div class="export-dropdown-menu" id="export-dropdown-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 4px); z-index: 100; min-width: 230px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: var(--space-1);">
+                <button type="button" class="dropdown-item" id="export-filtered-btn" style="width: 100%; text-align: left; background: none; border: none; padding: 8px 12px; font-size: var(--text-xs); cursor: pointer; border-radius: var(--radius-sm); color: var(--color-text-main); display: flex; align-items: center; justify-content: space-between;">
+                  <span style="display: flex; align-items: center; gap: 6px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                    Filtered View
+                  </span>
+                  <span class="badge badge-primary" id="export-filtered-count-label">0</span>
+                </button>
+                <button type="button" class="dropdown-item" id="export-all-btn" style="width: 100%; text-align: left; background: none; border: none; padding: 8px 12px; font-size: var(--text-xs); cursor: pointer; border-radius: var(--radius-sm); color: var(--color-text-main); display: flex; align-items: center; justify-content: space-between;">
+                  <span style="display: flex; align-items: center; gap: 6px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                    All Candidates
+                  </span>
+                  <span class="badge badge-neutral" id="export-all-count-label">0</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Filter Results Summary & Chips Bar -->
+          <div class="filter-results-summary" id="filter-results-summary" style="display: none; padding: var(--space-2) 0; font-size: var(--text-xs); color: var(--color-text-muted); align-items: center; gap: var(--space-2); flex-wrap: wrap;">
+            <span class="filter-results-text">Showing <strong id="filter-matching-count">0</strong> of <strong id="filter-total-count">0</strong> candidates</span>
+            <div class="filter-chips-list" id="filter-chips-list" style="display: flex; gap: var(--space-1); flex-wrap: wrap;"></div>
+          </div>
+
+          <!-- Collapsible Advanced Filters Panel -->
+          <div class="advanced-filters-panel" id="advanced-filters-panel" style="display: none;">
+            <div class="filters-grid">
+              <div class="filter-field-group">
+                <label for="filter-min-score" class="form-label">Min Score (%)</label>
+                <input type="number" id="filter-min-score" class="form-input form-input-sm" min="0" max="100" placeholder="0" step="1">
+              </div>
+              <div class="filter-field-group">
+                <label for="filter-max-score" class="form-label">Max Score (%)</label>
+                <input type="number" id="filter-max-score" class="form-input form-input-sm" min="0" max="100" placeholder="100" step="1">
+              </div>
+              <div class="filter-field-group">
+                <label for="filter-min-experience" class="form-label">Min Experience</label>
+                <select id="filter-min-experience" class="form-select form-select-sm">
+                  <option value="any">Any Experience</option>
+                  <option value="1">1+ years</option>
+                  <option value="2">2+ years</option>
+                  <option value="3">3+ years</option>
+                  <option value="5">5+ years</option>
+                  <option value="8">8+ years</option>
+                </select>
+              </div>
+              <div class="filter-field-group">
+                <label for="filter-review-status" class="form-label">Review Status</label>
+                <select id="filter-review-status" class="form-select form-select-sm">
+                  <option value="all">All Statuses</option>
+                  <option value="PENDING">Pending Review</option>
+                  <option value="REVIEWED">Reviewed</option>
+                  <option value="OVERRIDDEN">Overridden</option>
+                </select>
+              </div>
+              <div class="filter-field-group">
+                <label for="filter-skill-keyword" class="form-label">Skill Keyword</label>
+                <input type="text" id="filter-skill-keyword" class="form-input form-input-sm" placeholder="e.g. Docker, AWS">
+              </div>
+            </div>
+            <div id="filter-range-error" style="display: none; color: var(--color-danger); font-size: var(--text-xs); margin-top: var(--space-2);">
+              Minimum score cannot be greater than maximum score.
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. User Feedback: Loading State -->
+        <div id="loading-state" class="loading-block" style="display: none;" role="status" aria-live="polite">
+          <div class="spinner spinner-dark" aria-hidden="true"></div>
+          <span id="loading-title" style="display: none;">Processing</span>
+          <span id="loading-message">Evaluating candidate resumes and ranking applicants...</span>
+          <span id="loading-subtext" style="display: none;"></span>
+        </div>
+
+        <!-- 6. User Feedback: Error Message Banner -->
+        <div id="error-banner" class="empty-state" style="display: none; border-color: var(--color-rejected-border); background-color: var(--color-rejected-bg);" role="alert">
+          <div class="empty-state-icon" style="color: var(--color-rejected); background-color: var(--color-rejected-hover);" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <h4 class="empty-state-title" id="error-title" style="color: var(--color-rejected-dark);">Ranking Generation Failed</h4>
+          <p class="empty-state-text" id="error-message" style="color: var(--color-rejected-dark);">Please check the input parameters and try again.</p>
+          <button type="button" class="btn btn-secondary btn-sm" id="error-dismiss-btn">Dismiss</button>
+        </div>
+
+        <!-- 6. User Feedback: Initial Empty State -->
+        <div id="empty-state" class="empty-state">
+          <div class="empty-state-icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <h4 class="empty-state-title" id="empty-state-title">No Candidate Rankings Generated</h4>
+          <p class="empty-state-text" id="empty-state-desc">
+            Select a target job description above and click <strong>Generate Rankings</strong> to evaluate applicants, apply automated Top-N quota selection, and view explainable decision reasons.
+          </p>
+          <div id="empty-state-actions" style="margin-top: var(--space-4); display: none;"></div>
+        </div>
+
+        <!-- ===================================================================
+             5. Split Leaderboard: Selected vs. Rejected Columns
+             =================================================================== -->
+        <div id="leaderboard-content" class="split-leaderboard-grid" style="display: none;">
+          
+          <!-- Column 1: Selected Candidates Section -->
+          <div class="leaderboard-column" id="selected-column">
+            <div class="column-banner banner-selected">
+              <span style="display: flex; align-items: center; gap: var(--space-2);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Selected Candidates (Top N)
+              </span>
+              <span class="badge badge-selected" id="selected-column-badge">0 Selected</span>
+            </div>
+            
+            <!-- Container for Selected Candidate Cards (Populated by app.js) -->
+            <div id="selected-list" class="candidate-list" role="region" aria-label="Selected Candidates List"></div>
+          </div>
+
+          <!-- Column 2: Rejected Candidates Section -->
+          <div class="leaderboard-column" id="rejected-column">
+            <div class="column-banner banner-rejected">
+              <span style="display: flex; align-items: center; gap: var(--space-2);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                Rejected Candidates
+              </span>
+              <span class="badge badge-rejected" id="rejected-column-badge">0 Rejected</span>
+            </div>
+
+            <!-- Container for Rejected Candidate Cards (Populated by app.js) -->
+            <div id="rejected-list" class="candidate-list" role="region" aria-label="Rejected Candidates List"></div>
+          </div>
+
+        </div>
+      </section>
+
+      </div><!-- End #workspace-leaderboard -->
+
+    </main>
+
+    <!-- =======================================================================
+         Recruiter Job Authoring Modal Dialog (Phase 4B - Step 1)
+         ======================================================================= -->
+    <div id="job-modal-backdrop" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="job-modal-title">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <div class="modal-header-copy">
+            <div class="modal-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+              <span>Recruiter Job Authoring</span>
+            </div>
+            <h3 id="job-modal-title" class="modal-title">Create Job Posting</h3>
+            <p class="modal-subtitle">Define position requirements, extract technical skills using AI, and configure screening criteria.</p>
+          </div>
+          <button type="button" class="modal-close-btn" id="job-modal-close-btn" aria-label="Close job creation modal">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <form id="job-modal-form" class="modal-body" novalidate>
+          <!-- Grid: Title, Department, Location, Experience, Status -->
+          <div class="modal-form-grid">
+            <div class="form-group full-width">
+              <label for="job-modal-input-title" class="form-label required">
+                Job Title
+                <span class="form-label-hint">Required (max 255 chars)</span>
+              </label>
+              <input type="text" id="job-modal-input-title" class="form-control" placeholder="e.g. Senior Java Backend Engineer" maxlength="255" required />
+            </div>
+
+            <div class="form-group">
+              <label for="job-modal-input-dept" class="form-label">
+                Department
+                <span class="form-label-hint">Optional</span>
+              </label>
+              <input type="text" id="job-modal-input-dept" class="form-control" placeholder="e.g. Engineering, Platform" maxlength="100" />
+            </div>
+
+            <div class="form-group">
+              <label for="job-modal-input-location" class="form-label">
+                Location
+                <span class="form-label-hint">Optional</span>
+              </label>
+              <input type="text" id="job-modal-input-location" class="form-control" placeholder="e.g. Remote, San Francisco, CA" maxlength="100" />
+            </div>
+
+            <div class="form-group">
+              <label for="job-modal-input-min-exp" class="form-label">
+                Min. Experience (Years)
+                <span class="form-label-hint">Threshold</span>
+              </label>
+              <input type="number" id="job-modal-input-min-exp" class="form-control" min="0" max="50" step="1" value="0" />
+            </div>
+
+            <div class="form-group">
+              <label for="job-modal-input-status" class="form-label">
+                Initial Status
+              </label>
+              <select id="job-modal-input-status" class="form-select">
+                <option value="ACTIVE" selected>ACTIVE (Available for screening)</option>
+                <option value="INACTIVE">INACTIVE</option>
+                <option value="CLOSED">CLOSED</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Description Textarea with AI Action Bar -->
+          <div class="form-group">
+            <div class="job-modal-desc-header">
+              <label for="job-modal-input-desc" class="form-label required">
+                Job Description Text
+                <span class="form-label-hint">Required &bull; Paste full job specifications</span>
+              </label>
+              <div class="desc-stats" id="job-modal-desc-stats" aria-live="polite">
+                <span id="job-modal-char-count">0</span> / 50,000 chars
+              </div>
+            </div>
+            <textarea id="job-modal-input-desc" class="form-control modal-textarea" rows="6" maxlength="50000" placeholder="Paste the job description text here... (responsibilities, required qualifications, technical stack)" required></textarea>
+            
+            <!-- AI Skill Extraction Trigger Bar -->
+            <div class="ai-extraction-bar">
+              <div class="ai-extraction-copy">
+                <span class="ai-pill">AI Assist</span>
+                <span class="ai-extraction-tip">Extract required IT &amp; technology skills automatically using the Python NLP microservice.</span>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" id="job-modal-extract-btn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" id="job-modal-extract-icon">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                </svg>
+                <span id="job-modal-extract-text">Extract Skills with AI</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Required Skills Editor Section -->
+          <div class="skills-editor-card">
+            <div class="skills-editor-header">
+              <div>
+                <h4 class="skills-editor-title">
+                  <span>Required Technical Skills</span>
+                  <span class="badge badge-neutral" id="job-modal-skills-count">0 skills</span>
+                </h4>
+                <p class="skills-editor-subtitle">
+                  AI-extracted and custom skills required for this position. Candidates will be screened against these skills.
+                </p>
+              </div>
+              <button type="button" class="btn btn-outline btn-xs" id="job-modal-clear-skills-btn" style="padding: 2px 8px; font-size: 0.75rem; border-radius: var(--radius-sm);">
+                Clear All
+              </button>
+            </div>
+
+            <!-- Skill Chips Container -->
+            <div class="skill-chips-wrap" id="job-modal-skills-wrap" aria-live="polite" aria-label="Required Skills List">
+              <span class="skills-placeholder-text" id="job-modal-skills-empty-hint">No skills added yet. Paste a description above and click "Extract Skills with AI" or type a skill below.</span>
+            </div>
+
+            <!-- Manual Skill Adder Input -->
+            <div class="manual-skill-adder">
+              <input type="text" id="job-modal-custom-skill-input" class="form-control form-control-sm" placeholder="Add custom skill (e.g. Docker, Kafka, AWS) and press Enter..." maxlength="60" />
+              <button type="button" class="btn btn-secondary btn-sm" id="job-modal-add-skill-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Add Skill</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Modal Error Banner -->
+          <div class="error-banner is-hidden" id="job-modal-error-banner" role="alert">
+            <div class="error-content">
+              <h4 class="error-title" id="job-modal-error-title">Validation Error</h4>
+              <p class="error-description" id="job-modal-error-desc">Please fill out all required fields.</p>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="job-modal-cancel-btn">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="job-modal-save-btn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" id="job-modal-save-icon">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span id="job-modal-save-text">Save Job Posting</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         6. User Feedback: Toast Notifications Container
+         ======================================================================= -->
+    <div id="toast-container" class="toast-container" role="region" aria-live="polite" aria-label="Notifications"></div>
+
+    <!-- App Footer -->
+    <footer class="app-footer" role="contentinfo">
+      <div class="footer-container">
+        <span>Intelligent Resume Screening System &bull; Java Spring Boot 3 & Python NLP Microservice</span>
+        <span>Deterministic Ranking &amp; Grounded Decision Reasoning</span>
+      </div>
+    </footer>
+
+  </div>
+</body>
+</html>

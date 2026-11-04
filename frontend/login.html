@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sign in to the Intelligent Resume Screening System Recruiter Portal.">
+  <title>Sign In | Intelligent Resume Screening System</title>
+
+  <!-- Google Fonts: Inter for enterprise typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Core Layout and Component CSS -->
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/components.css">
+
+  <!-- Application API & Auth Modules -->
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+<body class="auth-page-body">
+  <div class="auth-container">
+    
+    <div class="auth-card">
+      
+      <!-- Brand Header -->
+      <header class="auth-brand-header">
+        <div class="auth-brand-badge" aria-hidden="true">RS</div>
+        <h1 class="auth-title">Recruiter Sign In</h1>
+        <p class="auth-subtitle">Access your candidate screening &amp; ranking dashboard</p>
+      </header>
+
+      <!-- Contextual Alerts -->
+      <div id="auth-success-alert" class="auth-alert auth-alert-success" role="status" style="display: none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px;">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <span id="auth-success-message">Account created successfully! Please sign in.</span>
+      </div>
+
+      <div id="auth-warning-alert" class="auth-alert auth-alert-warning" role="alert" style="display: none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px;">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span id="auth-warning-message"></span>
+      </div>
+
+      <div id="auth-error-alert" class="auth-alert auth-alert-error" role="alert" style="display: none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span id="auth-error-message"></span>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" novalidate>
+        <div class="form-group" style="margin-bottom: var(--space-4);">
+          <label for="login-email" class="form-label">
+            <span>Work Email</span>
+          </label>
+          <input 
+            type="email" 
+            id="login-email" 
+            name="email" 
+            class="form-control" 
+            placeholder="recruiter@company.com" 
+            required 
+            autocomplete="email"
+            autofocus
+          >
+        </div>
+
+        <div class="form-group" style="margin-bottom: var(--space-6);">
+          <label for="login-password" class="form-label">
+            <span>Password</span>
+          </label>
+          <input 
+            type="password" 
+            id="login-password" 
+            name="password" 
+            class="form-control" 
+            placeholder="••••••••" 
+            required 
+            autocomplete="current-password"
+          >
+        </div>
+
+        <button type="submit" id="login-submit-btn" class="btn btn-primary btn-lg" style="width: 100%; justify-content: center;">
+          <span id="login-submit-spinner" class="auth-spinner" style="display: none;" aria-hidden="true"></span>
+          <span id="login-submit-text">Sign In</span>
+        </button>
+      </form>
+
+      <!-- Footer Link to Register -->
+      <footer class="auth-footer">
+        <span>Don't have an account? </span>
+        <a href="register.html">Create a Recruiter Account</a>
+      </footer>
+
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const loginForm = document.getElementById('login-form');
+      const emailInput = document.getElementById('login-email');
+      const passwordInput = document.getElementById('login-password');
+      const submitBtn = document.getElementById('login-submit-btn');
+      const submitText = document.getElementById('login-submit-text');
+      const submitSpinner = document.getElementById('login-submit-spinner');
+      const errorAlert = document.getElementById('auth-error-alert');
+      const errorMessage = document.getElementById('auth-error-message');
+      const warningAlert = document.getElementById('auth-warning-alert');
+      const warningMessage = document.getElementById('auth-warning-message');
+      const successAlert = document.getElementById('auth-success-alert');
+      const successMessage = document.getElementById('auth-success-message');
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const isRegistered = urlParams.get('registered') === 'true' || urlParams.get('registered') === '1';
+      const logoutStatus = urlParams.get('logout_status');
+
+      // Check URL parameters for registration confirmation
+      if (isRegistered) {
+        const registeredEmail = urlParams.get('email');
+        if (registeredEmail && emailInput) {
+          emailInput.value = registeredEmail;
+        }
+        successMessage.textContent = 'Account created successfully! Please sign in with your password.';
+        successAlert.style.display = 'flex';
+      }
+
+      // Check URL parameters for logout status
+      if (logoutStatus === 'offline') {
+        warningMessage.textContent = 'You have been signed out locally. However, the server could not be reached to confirm remote session termination. Please sign in when back online.';
+        warningAlert.style.display = 'flex';
+      } else if (logoutStatus === 'success') {
+        successMessage.textContent = 'You have been successfully signed out.';
+        successAlert.style.display = 'flex';
+      }
+
+      // Guard: Redirect to dashboard if already authenticated (only if not newly registered and not just logged out)
+      if (!isRegistered && !logoutStatus && window.auth && typeof window.auth.redirectIfAuthenticated === 'function') {
+        window.auth.redirectIfAuthenticated('index.html');
+      }
+
+      function showError(msg) {
+        errorMessage.textContent = msg;
+        errorAlert.style.display = 'flex';
+        successAlert.style.display = 'none';
+        warningAlert.style.display = 'none';
+      }
+
+      function hideAlerts() {
+        errorAlert.style.display = 'none';
+        successAlert.style.display = 'none';
+        warningAlert.style.display = 'none';
+      }
+
+      function setLoading(isLoading) {
+        submitBtn.disabled = isLoading;
+        emailInput.disabled = isLoading;
+        passwordInput.disabled = isLoading;
+        if (isLoading) {
+          submitSpinner.style.display = 'inline-block';
+          submitText.textContent = 'Signing in...';
+        } else {
+          submitSpinner.style.display = 'none';
+          submitText.textContent = 'Sign In';
+        }
+      }
+
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAlerts();
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!email) {
+          showError('Please enter your email address.');
+          emailInput.focus();
+          return;
+        }
+
+        if (!password) {
+          showError('Please enter your password.');
+          passwordInput.focus();
+          return;
+        }
+
+        setLoading(true);
+
+        try {
+          const authResult = await window.auth.login(email, password);
+          // Redirect to recruiter dashboard upon successful authentication
+          window.location.href = 'index.html';
+        } catch (err) {
+          showError(err.message || 'Authentication failed. Please check your credentials.');
+          passwordInput.value = '';
+          passwordInput.focus();
+        } finally {
+          setLoading(false);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

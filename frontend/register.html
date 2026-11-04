@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Create a recruiter account in the Intelligent Resume Screening System.">
+  <title>Create Account | Intelligent Resume Screening System</title>
+
+  <!-- Google Fonts: Inter for enterprise typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Core Layout and Component CSS -->
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/components.css">
+
+  <!-- Application API & Auth Modules -->
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+<body class="auth-page-body">
+  <div class="auth-container" style="max-width: 480px;">
+    
+    <div class="auth-card">
+      
+      <!-- Brand Header -->
+      <header class="auth-brand-header">
+        <div class="auth-brand-badge" aria-hidden="true">RS</div>
+        <h1 class="auth-title">Create Recruiter Account</h1>
+        <p class="auth-subtitle">Register to screen candidates and manage recruitment pipelines</p>
+      </header>
+
+      <!-- Contextual Alerts -->
+      <div id="auth-success-alert" class="auth-alert auth-alert-success" role="status" style="display: none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px;">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <div>
+          <span id="auth-success-message" style="display: block; font-weight: var(--font-semibold);">Account created successfully!</span>
+          <span style="display: block; font-size: var(--text-xs); margin-top: 2px;">Redirecting you to sign in...</span>
+        </div>
+      </div>
+
+      <div id="auth-error-alert" class="auth-alert auth-alert-error" role="alert" style="display: none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span id="auth-error-message"></span>
+      </div>
+
+      <!-- Registration Form -->
+      <form id="register-form" novalidate>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-4);">
+          <div class="form-group">
+            <label for="register-firstname" class="form-label">
+              <span>First Name</span>
+            </label>
+            <input 
+              type="text" 
+              id="register-firstname" 
+              name="firstName" 
+              class="form-control" 
+              placeholder="e.g. Jane" 
+              maxlength="50" 
+              required 
+              autofocus
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="register-lastname" class="form-label">
+              <span>Last Name</span>
+            </label>
+            <input 
+              type="text" 
+              id="register-lastname" 
+              name="lastName" 
+              class="form-control" 
+              placeholder="e.g. Smith" 
+              maxlength="50" 
+              required
+            >
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: var(--space-4);">
+          <label for="register-email" class="form-label">
+            <span>Work Email</span>
+          </label>
+          <input 
+            type="email" 
+            id="register-email" 
+            name="email" 
+            class="form-control" 
+            placeholder="jane.smith@company.com" 
+            required 
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="form-group" style="margin-bottom: var(--space-6);">
+          <label for="register-password" class="form-label">
+            <span>Password</span>
+            <span class="form-label-hint">Min 8 characters</span>
+          </label>
+          <input 
+            type="password" 
+            id="register-password" 
+            name="password" 
+            class="form-control" 
+            placeholder="Create a strong password" 
+            required 
+            minlength="8" 
+            maxlength="72"
+            autocomplete="new-password"
+          >
+        </div>
+
+        <button type="submit" id="register-submit-btn" class="btn btn-primary btn-lg" style="width: 100%; justify-content: center;">
+          <span id="register-submit-spinner" class="auth-spinner" style="display: none;" aria-hidden="true"></span>
+          <span id="register-submit-text">Create Recruiter Account</span>
+        </button>
+      </form>
+
+      <!-- Footer Link to Login -->
+      <footer class="auth-footer">
+        <span>Already have an account? </span>
+        <a href="login.html">Sign In</a>
+      </footer>
+
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Guard: Redirect to dashboard if already authenticated (Task 4 & 5)
+      if (window.auth && typeof window.auth.redirectIfAuthenticated === 'function') {
+        window.auth.redirectIfAuthenticated('index.html');
+      }
+
+      const registerForm = document.getElementById('register-form');
+      const firstNameInput = document.getElementById('register-firstname');
+      const lastNameInput = document.getElementById('register-lastname');
+      const emailInput = document.getElementById('register-email');
+      const passwordInput = document.getElementById('register-password');
+      const submitBtn = document.getElementById('register-submit-btn');
+      const submitText = document.getElementById('register-submit-text');
+      const submitSpinner = document.getElementById('register-submit-spinner');
+      const errorAlert = document.getElementById('auth-error-alert');
+      const errorMessage = document.getElementById('auth-error-message');
+      const successAlert = document.getElementById('auth-success-alert');
+      const successMessage = document.getElementById('auth-success-message');
+
+      function showError(msg) {
+        errorMessage.textContent = msg;
+        errorAlert.style.display = 'flex';
+        successAlert.style.display = 'none';
+      }
+
+      function hideError() {
+        errorAlert.style.display = 'none';
+      }
+
+      function setLoading(isLoading) {
+        submitBtn.disabled = isLoading;
+        firstNameInput.disabled = isLoading;
+        lastNameInput.disabled = isLoading;
+        emailInput.disabled = isLoading;
+        passwordInput.disabled = isLoading;
+        if (isLoading) {
+          submitSpinner.style.display = 'inline-block';
+          submitText.textContent = 'Creating Account...';
+        } else {
+          submitSpinner.style.display = 'none';
+          submitText.textContent = 'Create Recruiter Account';
+        }
+      }
+
+      registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideError();
+
+        const firstName = firstNameInput.value.trim();
+        const lastName = lastNameInput.value.trim();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        // Client-side validations
+        if (!firstName) {
+          showError('Please enter your first name.');
+          firstNameInput.focus();
+          return;
+        }
+
+        if (firstName.length > 50) {
+          showError('First name cannot exceed 50 characters.');
+          firstNameInput.focus();
+          return;
+        }
+
+        if (!lastName) {
+          showError('Please enter your last name.');
+          lastNameInput.focus();
+          return;
+        }
+
+        if (lastName.length > 50) {
+          showError('Last name cannot exceed 50 characters.');
+          lastNameInput.focus();
+          return;
+        }
+
+        if (!email) {
+          showError('Please enter your email address.');
+          emailInput.focus();
+          return;
+        }
+
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(email)) {
+          showError('Please enter a valid email address (e.g., name@domain.com).');
+          emailInput.focus();
+          return;
+        }
+
+        if (!password) {
+          showError('Please enter a password.');
+          passwordInput.focus();
+          return;
+        }
+
+        if (password.length < 8) {
+          showError('Password must be at least 8 characters long.');
+          passwordInput.focus();
+          return;
+        }
+
+        const passwordByteLength = new TextEncoder().encode(password).length;
+        if (passwordByteLength > 72) {
+          showError('Password cannot exceed 72 bytes.');
+          passwordInput.focus();
+          return;
+        }
+
+        setLoading(true);
+
+        try {
+          const result = await window.auth.register({
+            firstName,
+            lastName,
+            email,
+            password
+          });
+
+          // Show success message and navigate to login
+          successAlert.style.display = 'flex';
+          passwordInput.value = '';
+
+          setTimeout(() => {
+            window.location.href = `login.html?registered=true&email=${encodeURIComponent(email)}`;
+          }, 1400);
+
+        } catch (err) {
+          showError(err.message || 'Registration failed. Please check your inputs.');
+        } finally {
+          setLoading(false);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
+

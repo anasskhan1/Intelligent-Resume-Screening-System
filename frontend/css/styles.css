@@ -1,0 +1,574 @@
+/* =============================================================================
+   Intelligent Resume Screening System - Design System Core & Layout Styles
+   File: frontend/css/styles.css
+   Visual Direction: Modern enterprise SaaS recruiter dashboard.
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   1. Design Tokens & CSS Variables
+   ----------------------------------------------------------------------------- */
+:root {
+  /* Brand / Primary Palette (Deep Navy to Slate Indigo) */
+  --color-primary: #1e3a8a;          /* Deep royal navy */
+  --color-primary-hover: #172554;    /* Darker navy */
+  --color-primary-light: #2563eb;    /* Vibrant blue */
+  --color-primary-subtle: #eff6ff;   /* Soft ice blue tint */
+  --color-primary-border: #bfdbfe;
+
+  /* Neutral Background & Surface Palette */
+  --color-bg: #f8fafc;               /* Crisp slate off-white */
+  --color-bg-alt: #f1f5f9;           /* Secondary muted background */
+  --color-surface: #ffffff;          /* Pure white card surface */
+  --color-surface-hover: #f8fafc;
+  --color-surface-elevated: #ffffff;
+  --color-surface-subtle: #f8fafc;
+
+  /* Border Palette */
+  --color-border: #e2e8f0;           /* Subtle slate border */
+  --color-border-light: #edf2f7;
+  --color-border-hover: #cbd5e1;
+  --color-border-strong: #94a3b8;
+
+  /* Typography / Text Palette */
+  --color-text-main: #0f172a;        /* Deep slate navy for headings */
+  --color-text-body: #334155;        /* Neutral readable slate body */
+  --color-text-muted: #64748b;       /* Secondary / captions / timestamps */
+  --color-text-light: #94a3b8;       /* Subtle placeholders / inactive */
+  --color-text-inverse: #ffffff;     /* White on dark backgrounds */
+
+  /* Status Colors */
+  /* SELECTED - Emerald Green Accent */
+  --color-selected: #16a34a;
+  --color-selected-dark: #15803d;
+  --color-selected-bg: #f0fdf4;
+  --color-selected-border: #bbf7d0;
+  --color-selected-hover: #dcfce7;
+  --color-selected-glow: rgba(22, 163, 74, 0.15);
+
+  /* REJECTED - Crimson Red Accent */
+  --color-rejected: #dc2626;
+  --color-rejected-dark: #b91c1c;
+  --color-rejected-bg: #fef2f2;
+  --color-rejected-border: #fecaca;
+  --color-rejected-hover: #fee2e2;
+  --color-rejected-glow: rgba(220, 38, 38, 0.15);
+
+  /* OVERRIDE / REVIEWED - Warm Amber Accent */
+  --color-override: #d97706;
+  --color-override-dark: #b45309;
+  --color-override-bg: #fffbeb;
+  --color-override-border: #fde68a;
+  --color-override-hover: #fef3c7;
+  --color-override-glow: rgba(217, 119, 6, 0.15);
+
+  /* SHORTLISTED / INFO - Indigo Blue Accent */
+  --color-shortlisted: #4f46e5;
+  --color-shortlisted-dark: #4338ca;
+  --color-shortlisted-bg: #eef2ff;
+  --color-shortlisted-border: #c7d2fe;
+  --color-shortlisted-hover: #e0e7ff;
+
+  /* Typography Scale */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace;
+
+  --text-xs: 0.75rem;       /* 12px */
+  --text-sm: 0.875rem;      /* 14px */
+  --text-base: 1rem;        /* 16px */
+  --text-lg: 1.125rem;      /* 18px */
+  --text-xl: 1.25rem;       /* 20px */
+  --text-2xl: 1.5rem;       /* 24px */
+  --text-3xl: 1.875rem;     /* 30px */
+  --text-4xl: 2.25rem;      /* 36px */
+
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* Spacing Scale */
+  --space-0-5: 0.125rem;    /* 2px */
+  --space-1: 0.25rem;       /* 4px */
+  --space-1-5: 0.375rem;    /* 6px */
+  --space-2: 0.5rem;        /* 8px */
+  --space-2-5: 0.625rem;    /* 10px */
+  --space-3: 0.75rem;       /* 12px */
+  --space-4: 1rem;          /* 16px */
+  --space-5: 1.25rem;       /* 20px */
+  --space-6: 1.5rem;        /* 24px */
+  --space-8: 2rem;          /* 32px */
+  --space-10: 2.5rem;       /* 40px */
+  --space-12: 3rem;         /* 48px */
+
+  /* Border Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Shadows (Multi-layer soft SaaS elevation) */
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  --shadow-focus: 0 0 0 3px rgba(37, 99, 235, 0.2);
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Layout Boundaries */
+  --layout-max-width: 1400px;
+  --header-height: 72px;
+}
+
+/* -----------------------------------------------------------------------------
+   2. Reset & Base Typography
+   ----------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text-body);
+  line-height: var(--leading-normal);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-text-main);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.02em;
+}
+
+h1 { font-size: var(--text-3xl); }
+h2 { font-size: var(--text-2xl); }
+h3 { font-size: var(--text-xl); }
+h4 { font-size: var(--text-lg); }
+h5 { font-size: var(--text-base); }
+h6 { font-size: var(--text-sm); }
+
+p {
+  color: var(--color-text-body);
+  margin-bottom: var(--space-3);
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+a {
+  color: var(--color-primary-light);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+ul, ol {
+  list-style-position: inside;
+  margin-bottom: var(--space-4);
+}
+
+code, pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+/* -----------------------------------------------------------------------------
+   3. Page Shell & Dashboard Layout Structure
+   ----------------------------------------------------------------------------- */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+}
+
+/* Top Navigation Bar */
+.app-header {
+  height: var(--header-height);
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  align-items: center;
+}
+
+.header-container {
+  width: 100%;
+  max-width: var(--layout-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.brand-logo-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: var(--font-extrabold);
+  font-size: var(--text-lg);
+  box-shadow: 0 4px 10px rgba(30, 58, 138, 0.25);
+}
+
+.brand-text-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-text-main);
+  letter-spacing: -0.02em;
+}
+
+.brand-subtitle {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--font-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* -----------------------------------------------------------------------------
+   Top Workspace Navigation & Panes
+   ----------------------------------------------------------------------------- */
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  background-color: var(--color-bg-alt);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+}
+
+.nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.5rem 1rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.nav-tab:hover {
+  color: var(--color-text-main);
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+.nav-tab.is-active {
+  color: var(--color-primary);
+  background-color: var(--color-surface);
+  font-weight: var(--font-semibold);
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-xs);
+}
+
+.nav-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+/* Workspace Panes */
+.workspace-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  width: 100%;
+}
+
+/* -----------------------------------------------------------------------------
+   Global Visibility Utilities (Phase 8)
+   ----------------------------------------------------------------------------- */
+.is-hidden, [hidden] {
+  display: none !important;
+}
+
+.workspace-pane.is-hidden {
+  display: none !important;
+}
+
+/* Placeholder Cards for Steps 4 & 5 */
+.placeholder-section {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+.placeholder-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+.placeholder-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary-subtle);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-main);
+}
+
+.placeholder-description {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  max-width: 560px;
+  line-height: var(--leading-relaxed);
+}
+
+.placeholder-badge-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+  margin-top: var(--space-2);
+}
+
+/* Main Dashboard Body Wrapper */
+.dashboard-main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--layout-max-width);
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6) var(--space-12) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* Dashboard Page Header */
+.dashboard-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.hero-copy {
+  max-width: 680px;
+}
+
+.hero-title {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-extrabold);
+  color: var(--color-text-main);
+  margin-bottom: var(--space-1-5);
+  letter-spacing: -0.025em;
+}
+
+.hero-description {
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: var(--leading-relaxed);
+}
+
+/* Section Card Container */
+.dashboard-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.section-title-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+}
+
+.section-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-main);
+}
+
+.section-badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-0-5) var(--space-2-5);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  background-color: var(--color-bg-alt);
+  color: var(--color-text-body);
+  border: 1px solid var(--color-border);
+}
+
+/* Dual Column Split Layout for Selected vs Rejected */
+.split-leaderboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+  align-items: start;
+}
+
+/* App Footer */
+.app-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  padding: var(--space-6) 0;
+}
+
+.footer-container {
+  max-width: var(--layout-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* -----------------------------------------------------------------------------
+   4. Responsive Breakpoints
+   ----------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  :root {
+    --header-height: 64px;
+  }
+
+  .dashboard-main {
+    padding: var(--space-6) var(--space-4) var(--space-8) var(--space-4);
+    gap: var(--space-6);
+  }
+
+  .split-leaderboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    height: auto;
+    padding: var(--space-2) 0;
+  }
+
+  .header-container {
+    padding: 0 var(--space-4);
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .app-nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-title {
+    font-size: var(--text-2xl);
+  }
+
+  .hero-description {
+    font-size: var(--text-sm);
+  }
+
+  .footer-container {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --text-3xl: 1.5rem;
+    --text-2xl: 1.25rem;
+  }
+
+  .brand-subtitle {
+    display: none;
+  }
+}

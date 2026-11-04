@@ -1,0 +1,11 @@
+.git/
+.gitignore
+.env
+*.log
+*.sql
+*.zip
+phase1_final_package/
+ai-service-python/.venv/
+ai-service-python/__pycache__/
+backend-java/target/
+

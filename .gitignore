@@ -1,0 +1,107 @@
+# =============================================================================
+# Intelligent Resume Screening System - Git Ignore Configuration
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Environment & Secrets (CRITICAL: NEVER COMMIT REAL SECRETS)
+# -----------------------------------------------------------------------------
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+!.env.tidb.example
+!**/.env.tidb.example
+application-local.properties
+local.properties
+*.pem
+*.key
+*.pkcs12
+*.p12
+
+# -----------------------------------------------------------------------------
+# Python Artifacts & Virtual Environments
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# -----------------------------------------------------------------------------
+# Java & Maven Build Artifacts
+# -----------------------------------------------------------------------------
+target/
+**/target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.war
+*.ear
+
+# -----------------------------------------------------------------------------
+# Runtime Storage, Uploads & Log Files
+# -----------------------------------------------------------------------------
+uploads/
+**/uploads/
+logs/
+**/logs/
+*.log
+temp/
+**/temp/
+
+# -----------------------------------------------------------------------------
+# IDE, Editor & OS Metadata
+# -----------------------------------------------------------------------------
+.idea/
+*.iml
+*.iws
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Database backups and local test data
+backup_*.sql
+*_failed_backup.sql
+phase*_final_package*.zip
+resume_hashes.csv
+sample_resume*
+phase1_final_package/
+# Local database scripts and migration history
+*.sql
+
