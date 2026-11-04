@@ -140,8 +140,17 @@
     });
   }
 
+  const PRODUCTION_API_BASE_URL = 'https://resume-screening-backend-fjho.onrender.com';
+  const LOCAL_FALLBACK_API_BASE_URL = 'http://localhost:8080';
+
+  function isLocalHostname(hostname) {
+    if (!hostname) return false;
+    const h = String(hostname).toLowerCase().trim();
+    return h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h === '::1';
+  }
+
   /**
-   * Helper to retrieve backend API base URL from api.js or fallback.
+   * Helper to retrieve backend API base URL from api.js, config, or environment-aware fallback.
    * @returns {string} API Base URL
    */
   function getApiBaseUrl() {
@@ -151,7 +160,19 @@
     if (window.api && typeof window.api.getBaseUrl === 'function') {
       return window.api.getBaseUrl();
     }
-    return 'http://localhost:8080';
+    if (typeof window !== 'undefined') {
+      if (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL) {
+        return String(window.__APP_CONFIG__.API_BASE_URL).trim().replace(/\/+$/, '');
+      }
+      if (window.location && window.location.hostname) {
+        if (isLocalHostname(window.location.hostname)) {
+          const protocol = window.location.protocol || 'http:';
+          return `${protocol}//${window.location.hostname}:8080`;
+        }
+        return PRODUCTION_API_BASE_URL;
+      }
+    }
+    return LOCAL_FALLBACK_API_BASE_URL;
   }
 
   /**

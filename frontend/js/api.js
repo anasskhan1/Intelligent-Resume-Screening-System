@@ -15,6 +15,20 @@
  * Backend service base URL.
  * @type {string}
  */
+const PRODUCTION_API_BASE_URL = 'https://resume-screening-backend-fjho.onrender.com';
+const LOCAL_FALLBACK_API_BASE_URL = 'http://localhost:8080';
+
+/**
+ * Checks whether a hostname is a local development loopback address.
+ * @param {string} hostname
+ * @returns {boolean}
+ */
+function isLocalHostname(hostname) {
+  if (!hostname) return false;
+  const h = String(hostname).toLowerCase().trim();
+  return h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h === '::1';
+}
+
 function resolveBaseUrl() {
   if (typeof window !== 'undefined') {
     // 1. Explicit application config override
@@ -57,16 +71,20 @@ function resolveBaseUrl() {
       // Ignore localStorage access restrictions in sandboxed environments
     }
 
-    // 3. Derive backend base URL from current window location protocol & hostname with port 8080
+    // 3. Environment-aware resolution based on window location
     if (window.location && window.location.hostname) {
-      const protocol = window.location.protocol || 'http:';
-      const hostname = window.location.hostname;
-      return `${protocol}//${hostname}:8080`;
+      if (isLocalHostname(window.location.hostname)) {
+        const protocol = window.location.protocol || 'http:';
+        const hostname = window.location.hostname;
+        return `${protocol}//${hostname}:8080`;
+      }
+      // Production / Deployed environment
+      return PRODUCTION_API_BASE_URL;
     }
   }
 
   // 4. Default fallback for non-browser/SSR/test environments
-  return 'http://localhost:8080';
+  return LOCAL_FALLBACK_API_BASE_URL;
 }
 
 let BASE_URL = resolveBaseUrl();
