@@ -25,8 +25,8 @@ load_dotenv(CURRENT_DIR.parent / ".env")
 # =============================================================================
 # Environment Configuration with Safe Development Defaults
 # =============================================================================
-AI_HOST = os.getenv("AI_SERVICE_HOST", os.getenv("HOST", "127.0.0.1"))
-AI_PORT = int(os.getenv("AI_SERVICE_PORT", os.getenv("PORT", "8000")))
+AI_HOST = os.getenv("AI_SERVICE_HOST", os.getenv("HOST", "0.0.0.0"))
+AI_PORT = int(os.getenv("PORT", os.getenv("AI_SERVICE_PORT", "10000")))
 BACKEND_SERVICE_URL = os.getenv("BACKEND_SERVICE_URL", "http://localhost:8080")
 TEMP_UPLOAD_DIR = Path(os.getenv("TEMP_UPLOAD_DIR", str(CURRENT_DIR / "temp"))).resolve()
 

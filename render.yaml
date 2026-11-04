@@ -21,10 +21,10 @@ services:
     envVars:
       - key: AI_SERVICE_HOST
         value: 0.0.0.0
-      - key: AI_SERVICE_PORT
-        value: "8000"
       - key: PORT
-        value: "8000"
+        value: "10000"
+      - key: AI_SERVICE_PORT
+        value: "10000"
       - key: LOG_LEVEL
         value: INFO
       # Secure service-to-service API key generated automatically by Render
