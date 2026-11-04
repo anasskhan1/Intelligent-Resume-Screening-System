@@ -53,10 +53,7 @@ services:
 
       # Internal AI Service Communication & Authentication
       - key: AI_SERVICE_URL
-        fromService:
-          type: web
-          name: resume-screening-ai
-          property: hostport
+        value: https://resume-screening-ai-m36l.onrender.com
       - key: AI_SERVICE_API_KEY
         fromService:
           type: web
