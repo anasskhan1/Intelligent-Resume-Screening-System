@@ -495,7 +495,7 @@ public class CandidateRankingService {
      */
     public List<CandidateRankingResponseDto> rankCandidatesForJobDto(Long jobId, Integer topN, Double minScore) {
         rankCandidatesForJob(jobId, topN, minScore);
-        return getLeaderboardDtosByJob(jobId, null);
+        return readOnlyTransactionTemplate.execute(status -> getLeaderboardDtosByJob(jobId, null));
     }
 
     /**
